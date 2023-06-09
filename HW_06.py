@@ -2,7 +2,6 @@ import sys
 import os
 import re
 from pathlib import Path
-import unicodedata # для использования normalize()
 import shutil # 
 import tarfile
 import platform # для clearscrean()
