@@ -20,7 +20,7 @@ def main() ->str:
      #строка для отладки без передачи ПАРАМЕТРОВ argv[]
     # sort_path = "D:\\1._Test\\test_DIR_hw_06" 
     
-    # 3. Получим абсолютный путь для СОРТИРОВКИ
+    # 3. отримаємо абсолютний шлях для СОРТУВАННЯ
     sort_path = Path(sort_path)
     
     print("Тестовая папка для сортировки : ", sort_path)
@@ -40,34 +40,6 @@ def main() ->str:
     
 
 
-
-
-# ========================================        
-# Формуємо таблицю для друку
-# ========================================         
-def formated_lines():
-    lst = []
-    lst.append("|" + "=" * 50 + "|")
-    for category, value in dict_search_result.items():
-        # Шапка
-        lst.append("|{:^50}|".format(category))
-        lst.append("|" + "=" * 50 + "|")
-        
-        ext = "Extensions: " 
-        for extension in value[1]:
-            ext += extension + ", "
-        ext = ext[:-2]    
-        lst.append("|{:<50}|".format(ext))
-        lst.append("|" + "-" * 50 + "|")
-        
-        # формуємо елементи таблиці
-        for element in value[0]:
-            lst.append("|{:<50}|".format(element))
-        
-        lst.append("|" + "=" * 50 + "|")    
-    return lst
-
- 
 # ========================================
 # Функція виконує РОЗБІР теки із ХЛАМОМ 
 # ========================================       
@@ -91,7 +63,7 @@ def sort_folder(pth, parent_folder):
         
         # нормалізація імені папки або файла
         if not category == "other":
-            norm_name = normalize(item.name)
+            norm_name = m_normalize(item.name)
         else:
             norm_name = item.name
         
@@ -171,7 +143,7 @@ def clear_screen():
         
         
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# заменяет кирилицу на латинский словарь
+# замінює кирилицю на латинский словник
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def cyr_lat(name)->str:
     # создадим таблицу
@@ -197,6 +169,32 @@ def is_folder(folder_path:str) ->bool:
         return True
     
     
+# ========================================        
+# Формуємо таблицю для друку
+# ========================================         
+def formated_lines():
+    lst = []
+    lst.append("|" + "=" * 50 + "|")
+    for category, value in dict_search_result.items():
+        # Шапка
+        lst.append("|{:^50}|".format(category))
+        lst.append("|" + "=" * 50 + "|")
+        
+        ext = "Extensions: " 
+        for extension in value[1]:
+            ext += extension + ", "
+        ext = ext[:-2]    
+        lst.append("|{:<50}|".format(ext))
+        lst.append("|" + "-" * 50 + "|")
+        
+        # формуємо елементи таблиці
+        for element in value[0]:
+            lst.append("|{:<50}|".format(element))
+        
+        lst.append("|" + "=" * 50 + "|")    
+    return lst
+
+    
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Функція повертає КАТЕГОРІЮ до якої відноситься файл
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -214,7 +212,7 @@ def get_category(file_name:str) ->str:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Функція нормалізує [name] теки/файла
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def normalize(name:str) ->str:
+def m_normalize(name:str) ->str:
     
     # 1. замена кирилицы на лат
     name = cyr_lat(name)
