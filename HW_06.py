@@ -9,29 +9,27 @@ import platform # для clearscrean()
 
 def main() ->str:
     
-    # очищення екрану
+    # 1. очищення екрану
     clear_screen()
     
-    # try:
-    #     sort_path = sys.argv[1]
-    # except:
-    #     return ("Add an argument (a path to folder) in command line before to run the file.py\nExample: python *.py [disk://folder//]")
+    try:
+        sort_path = sys.argv[1]
+    except:
+        return ("Add an argument (a path to folder) in command line before to run the file.py\nExample: python *.py [disk://folder//]")
     
-     #строка для отладки без передачи ПАРАМЕТРОВ argv[]
-    sort_path = "D:\\1._Test\\test_DIR_hw_06" 
+    #  строка для отладки без передачи ПАРАМЕТРОВ argv[]
+    # sort_path = "D:\\1._Test\\test_DIR_hw_06" 
     
-    # 3. отримаємо абсолютний шлях для СОРТУВАННЯ
+    # 2. отримаємо абсолютний шлях для СОРТУВАННЯ
     sort_path = Path(sort_path)
-    
-    print("Тестовая папка для сортировки : ", sort_path)
     
     # перевіремо наявність шляху
     if not sort_path.exists(): return f"The path {sort_path} isn't available."
     
-    # передамо шлях до теки де виконаємо сортування файлів
+    # 3. передамо шлях до теки де виконаємо сортування файлів
     sort_folder(sort_path, sort_path)
     
-    # виводимо результати роботи з зформованого списку
+    # 4. виводимо результати роботи з зформованого списку
     for line in formated_lines():
         print(line)
             
@@ -51,26 +49,22 @@ def sort_folder(pth, parent_folder):
         category = "other"
         full_name = pth.joinpath(item) 
         
-        # працюємо з файлом
-        if item.is_file():
-            category = get_category(item.name)
+        # 1. Отримаємо категорію
+        category = get_category(item)
         
-        # працюємо з текою
-        else:
-            category = "folder"
-            if is_folder(full_name):
-                sort_folder(full_name, parent_folder)
+        if category == "folder" and is_folder_full(full_name): 
+            sort_folder(full_name, parent_folder) 
         
-        # нормалізація імені папки або файла
+        # 2. Виконаємо нормалізацію папки або файла
+        norm_name = item.name
         if not category == "other":
             norm_name = m_normalize(item.name)
-        else:
-            norm_name = item.name
         
         # перевіремо зміни у імені
         if item.name != norm_name:
             full_name.rename(pth.joinpath(norm_name))
         
+        # 3. Сортуємо(переміщуємо) файл
         # працюємо з файлом
         if category != "folder":
             # додамо у словник НОВИЙ елемент для ЗНАЙДЕНОЇ інф.
@@ -78,55 +72,21 @@ def sort_folder(pth, parent_folder):
             # тоб то теки для цієї катеогрії ще не існує
             is_makedir = search_result_add_item(category, norm_name)
             search_result_add_extension(category, norm_name)
+            
             if is_makedir: # створимо ПЕРШИЙ раз теку для КАТЕГОРІЇ
                 parent_folder.joinpath(category).mkdir()
 
-            # розберемо файли по теках для своїх КАТЕГОРІЙ
-            source = full_name
-            destination = parent_folder.joinpath(category)
-            destination = destination.joinpath(source.name)
-            try:
-                source.rename(destination)  # ПЕРЕМІЩЕННЯ!!!
-            except:
-                # сформуємо нове ім'я для файлу
-                new_filename = f"{source.stem}_copy{source.suffix}"
-                new_source = pth.joinpath(new_filename)
-                
-               # якщо файл існує з таким ім'ям
-                source.rename(new_source)
-                
-                destination = parent_folder.joinpath(category)
-                destination = destination.joinpath(new_filename)
-                shutil.copy(new_source, destination)
-                new_source.unlink()  # видалення файла
-                
-                norm_name = new_filename
-               # оновимо інф. у словнику стосовно нового файлу
-                search_result_update(category, norm_name)
-               
-            # якщо це архів розпакуємо його
-            if category == "archives":
-                # створимо теку для архіву
-                name_archive_folder = norm_name.split(".")[0]
-                extension = norm_name.split(".")[-1]
-                
-                archive_folder = parent_folder.joinpath(category)
-                archive_folder.joinpath(name_archive_folder).mkdir()
-                
-                archive_path = archive_folder.joinpath(norm_name)
-                
-                destination_folder = archive_folder.joinpath(name_archive_folder)
-                try:
-                    shutil.unpack_archive(archive_path, destination_folder, extension)
-                except:
-                    print("The error has accurred during unpuck an archive!")
-        
+            # переміщюємо(сортуємо) файл до теки своєї КАТЕГОРІЇ
+            sort_file(category, full_name, parent_folder)
+            
         else:  # працюємо з текою
                # якщо тека з якою працюємо ВЖЕ порожня ВИДАЛЕМО її
+        
             norm_path = pth.joinpath(norm_name)   
-            
-            if not(is_folder(norm_path)):
+        # 4. Видаляємо ПОРОЖНЮ теку    
+            if not(is_folder_full(norm_path)):
                 norm_path.rmdir()
+                
                 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -146,16 +106,45 @@ def clear_screen():
 # замінює кирилицю на латинский словник
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def cyr_lat(name)->str:
-    # создадим таблицу
+    # створимо таблицю
     trans_table = str.maketrans(translate_dict)
+    
     return name.translate(trans_table)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+# Функція вирішує проблему дублювання файлу
+# - формує нове ім'я, 
+# - копіює файл з новим іменем, 
+# - видаляє файл у старому місці
+# Повертає: нове ім'я файлу 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+def issue_twin_item(category, full_name, parent_folder) ->str:
+    
+    # потрапили на файли з однаковими ім'ям
+    # сформуємо нове ім'я для файлу
+    source = full_name
+    new_filename = f"{source.stem}_copy{source.suffix}"
+    
+    new_source = full_name.parent
+    new_source = Path(full_name.parent).joinpath(new_filename)
+        
+    # змінемо ім'я 
+    source.rename(new_source)
+    
+    destination = parent_folder.joinpath(category)
+    destination = destination.joinpath(new_filename)
+    shutil.copy(new_source, destination)
+    new_source.unlink()  # видалення файла
+
+    return new_filename
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Перевірка ну порожню ТЕКУ 
 # Повертає True = full; False = empty
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def is_folder(folder_path:str) ->bool:
+def is_folder_full(folder_path:str) ->bool:
     # Получить список файлов и папок в папке
     contents = os.scandir(folder_path)
 
@@ -164,9 +153,9 @@ def is_folder(folder_path:str) ->bool:
 
     # Проверить, является ли список пустым
     if len(contents_list) == 0:
-        return False
+        return False # якщо тека ПОРОЖНЯ 
     else:
-        return True
+        return True # якщо тека з файлами
     
     
 # ========================================        
@@ -183,7 +172,8 @@ def formated_lines():
         ext = "Extensions: " 
         for extension in value[1]:
             ext += extension + ", "
-        ext = ext[:-2]    
+        ext = ext[:-2]   
+         
         lst.append("|{:<50}|".format(ext))
         lst.append("|" + "-" * 50 + "|")
         
@@ -198,14 +188,19 @@ def formated_lines():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Функція повертає КАТЕГОРІЮ до якої відноситься файл
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def get_category(file_name:str) ->str:
-    category = "other"
-    for ct,value in dict_category.items():
-        extension = file_name.split(".")[-1]
-        if extension:
-            if extension.upper() in value:
-                category = ct 
-                break
+def get_category(item) ->str:
+    
+    if item.is_file():
+        category = "other"
+        extension = item.suffix[1:] # приклад -> "txt"
+        for ct,value in dict_category.items():
+            if extension and extension.upper() in value:
+                category = ct
+                return category
+            
+    # якщо зустріли Теку        
+    if item.is_dir(): category = "folder"
+    
     return category
 
    
@@ -224,9 +219,11 @@ def m_normalize(name:str) ->str:
         extension = "." + name.split(".")[-1]
         name = name.split(".")[0]
         
-    # 2. Оставим a-z, A_Z, 0-9;  ^ - означает отрицание
+    # 2. Замінюємо спецсимволи на знак "_"
+    #    Залишаємо a-z, A_Z, 0-9;  ^ - означает отрицание
     pattern = "[^a-zA-Z0-9]"
     name = re.sub(rf"{pattern}","_", name)
+    
     return f"{name}{extension}"
         
         
@@ -238,7 +235,7 @@ def search_result_update(category, item):
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~            
-# Добавляет найденое расширение в set() СЛОВАРЯ
+# Добавляет найденое расширение в set() СЛОВНИКА
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 def search_result_add_extension(category, item):
     try:
@@ -253,12 +250,51 @@ def search_result_add_extension(category, item):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        
 def search_result_add_item(category, item) -> bool:
     try:
-            dict_search_result[category][0].append(item)
-            return False
+        dict_search_result[category][0].append(item)
+        return False
     except KeyError:
         dict_search_result[category] = [[],set()]
         dict_search_result[category][0].append(item)
         return True # папки для этой категории еще НЕ существует
+
+
+
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+# Функція виконує сортування(переміщення) файлів до відповідної теки
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   
+def sort_file(category, full_name, parent_folder):
+    norm_name = full_name.name
+    source = full_name
+    destination = parent_folder.joinpath(category)
+    destination = destination.joinpath(source.name)
+    try:
+        source.rename(destination)  # ПЕРЕМІЩЕННЯ!!!
+    except:
+        new_filename = issue_twin_item(category, full_name, parent_folder)
+        # оновимо інф. у словнику стосовно нового файлу
+        norm_name = new_filename
+        search_result_update(category, new_filename)
+        
+    # якщо це архів розпакуємо його
+    if category == "archives":
+        
+        # створимо теку для архіву
+        name_archive_folder =  norm_name.partition(".")[0]  #full_name.stem  
+        extension = full_name.suffix[1:]      
+        
+        archive_folder = parent_folder.joinpath(category)
+        archive_folder.joinpath(name_archive_folder).mkdir()
+        
+        archive_path = archive_folder.joinpath(norm_name)
+        
+        destination_folder = archive_folder.joinpath(name_archive_folder)
+        try:
+            shutil.unpack_archive(archive_path, destination_folder, extension)
+        except:
+            print("The error has accurred during unpuck the archive!")
+        
 
 
 # Місце входу у програму
