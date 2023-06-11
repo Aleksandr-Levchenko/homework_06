@@ -12,13 +12,13 @@ def main() ->str:
     # очищення екрану
     clear_screen()
     
-    try:
-        sort_path = sys.argv[1]
-    except:
-        return ("Add an argument (a path to folder) in command line before to run the file.py\nExample: python *.py [disk://folder//]")
+    # try:
+    #     sort_path = sys.argv[1]
+    # except:
+    #     return ("Add an argument (a path to folder) in command line before to run the file.py\nExample: python *.py [disk://folder//]")
     
      #строка для отладки без передачи ПАРАМЕТРОВ argv[]
-    # sort_path = "D:\\1._Test\\test_DIR_hw_06" 
+    sort_path = "D:\\1._Test\\test_DIR_hw_06" 
     
     # 3. отримаємо абсолютний шлях для СОРТУВАННЯ
     sort_path = Path(sort_path)
