@@ -15,10 +15,11 @@ def main() ->str:
     try:
         sort_path = sys.argv[1]
     except:
-        return ("Add an argument (a path to folder) in command line before to run the file.py\nExample: python *.py [disk://folder//]")
+        return ("Add an argument (a path to folder) in command line before to run program\nExample: *.exe [disk://folder]")
     
     #  строка для отладки без передачи ПАРАМЕТРОВ argv[]
     # sort_path = "D:\\1._Test\\test_DIR_hw_06" 
+                 
     
     # 2. отримаємо абсолютний шлях для СОРТУВАННЯ
     sort_path = Path(sort_path)
@@ -62,8 +63,8 @@ def sort_folder(pth, parent_folder):
         
         # перевіремо зміни у імені
         if item.name != norm_name:
-            full_name.rename(pth.joinpath(norm_name))
-        
+            full_name = full_name.rename(pth.joinpath(norm_name))
+            
         # 3. Сортуємо(переміщуємо) файл
         # працюємо з файлом
         if category != "folder":
@@ -77,6 +78,7 @@ def sort_folder(pth, parent_folder):
                 parent_folder.joinpath(category).mkdir()
 
             # переміщюємо(сортуємо) файл до теки своєї КАТЕГОРІЇ
+            
             sort_file(category, full_name, parent_folder)
             
         else:  # працюємо з текою
