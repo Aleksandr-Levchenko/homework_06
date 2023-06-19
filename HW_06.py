@@ -6,6 +6,8 @@ import shutil #
 import tarfile
 import platform # для clearscrean()
 
+# Version 1.2
+# fixed the rename/remove error with cyrilic names of the file like: первый_файл.txt
 
 def main() ->str:
     
